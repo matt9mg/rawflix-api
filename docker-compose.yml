@@ -1,0 +1,34 @@
+services:
+  app:
+    image: golang
+    ports:
+      - 3002:3002
+    working_dir: /app
+    volumes:
+      - ./.env:/app/.env
+      - ./bin/rawflix:/app/rawflix
+    command: ./rawflix
+    networks:
+      - rawflix
+    container_name: rawflix_app
+    depends_on:
+      - db
+    links:
+      - db
+
+  db:
+    environment:
+      POSTGRES_PASSWORD: app
+      POSTGRES_USER: app
+      POSTGRES_DB: app
+    image: postgres:15
+    ports:
+      - 5432:5432
+    volumes:
+      - ./docker-volumes/postgresql:/var/lib/postgresql/data
+    container_name: rawflix_db
+    networks:
+      - rawflix
+
+networks:
+  rawflix:
