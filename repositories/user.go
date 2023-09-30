@@ -12,6 +12,7 @@ type UserRepository interface {
 	IDAndTokenExists(id uint, token string) (bool, error)
 	FindOneByUsername(username string) (*entities.User, error)
 	Save(user *entities.User) error
+	RemoveTokenFromByUserID(userID uint) error
 }
 
 type User struct {
@@ -56,4 +57,8 @@ func (u *User) FindOneByUsername(username string) (*entities.User, error) {
 
 func (u *User) Save(user *entities.User) error {
 	return u.db.Save(user).Error
+}
+
+func (u *User) RemoveTokenFromByUserID(userID uint) error {
+	return u.db.Debug().Model(&entities.User{}).Where("id = ?", userID).Update("token", nil).Error
 }

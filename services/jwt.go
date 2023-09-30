@@ -2,46 +2,52 @@ package services
 
 import (
 	"errors"
-	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/matt9mg/rawflix-api/entities"
 	"github.com/matt9mg/rawflix-api/repositories"
+	"time"
 )
 
+const jwtTokenHeader = "x-jwt-token"
+
 type JWTAuthenticator interface {
-	Validate(token string) (*jwt.Token, error)
+	Validate(ctx *fiber.Ctx) (*Claims, error)
 	CreateToken(user *entities.User) (string, error)
 }
 
 type JWT struct {
 	secret   []byte
-	expires  *jwt.NumericDate
 	userRepo repositories.UserRepository
 }
 
-func NewJWT(secret []byte, expires *jwt.NumericDate, userRepo repositories.UserRepository) JWTAuthenticator {
+func NewJWT(secret []byte, userRepo repositories.UserRepository) JWTAuthenticator {
 	return &JWT{
 		secret:   secret,
-		expires:  expires,
 		userRepo: userRepo,
 	}
 }
 
+type Claims struct {
+	UserID uint `json:"user_id"`
+	*jwt.RegisteredClaims
+}
+
 func (j *JWT) CreateToken(user *entities.User) (string, error) {
-	claims := &jwt.MapClaims{
-		"expiresAt": j.expires,
-		"userID":    user.ID,
+	claims := &Claims{
+		UserID: user.ID,
+		RegisteredClaims: &jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(60 * time.Minute)),
+		},
 	}
 
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(j.secret)
 }
 
-func (j *JWT) Validate(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
+func (j *JWT) Validate(ctx *fiber.Ctx) (*Claims, error) {
+	claims := &Claims{}
 
+	token, err := jwt.ParseWithClaims(ctx.Get(jwtTokenHeader), claims, func(token *jwt.Token) (any, error) {
 		return j.secret, nil
 	})
 
@@ -61,9 +67,7 @@ func (j *JWT) Validate(tokenString string) (*jwt.Token, error) {
 		return nil, errors.New("unable to handle token")
 	}
 
-	claims := token.Claims.(jwt.MapClaims)
-
-	match, err := j.userRepo.IDAndTokenExists(claims["userID"].(uint), tokenString)
+	match, err := j.userRepo.IDAndTokenExists(claims.UserID, ctx.Get(jwtTokenHeader))
 
 	if err != nil {
 		return nil, err
@@ -73,5 +77,5 @@ func (j *JWT) Validate(tokenString string) (*jwt.Token, error) {
 		return nil, errors.New("unable to validate stored claims")
 	}
 
-	return token, nil
+	return claims, nil
 }

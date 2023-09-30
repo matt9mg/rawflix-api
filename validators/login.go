@@ -27,12 +27,12 @@ func (l *Login) Validate(login *types.Login) *types.LoginErrors {
 	hasErrors := false
 
 	if login.Username == "" {
-		login.Username = "cannot be blank"
+		loginError.Username = "cannot be blank"
 		hasErrors = true
 	}
 
 	if login.Password == "" {
-		login.Password = "cannot be blank"
+		loginError.Password = "cannot be blank"
 		hasErrors = true
 	}
 

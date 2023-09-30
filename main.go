@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"github.com/matt9mg/rawflix-api/cmd"
 	"github.com/matt9mg/rawflix-api/controllers"
@@ -14,7 +13,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 func main() {
@@ -51,13 +49,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	jwt := services.NewJWT([]byte(os.Getenv("JWT_SECRET")), jwt.NewNumericDate(time.Unix(1516239022, 0)), userRepo)
+	jwt := services.NewJWT([]byte(os.Getenv("JWT_SECRET")), userRepo)
 
 	registerValidator := validators.NewRegister(userRepo)
 	loginValidator := validators.NewLogin(userRepo, passwordHasher)
 
 	registerController := controllers.NewRegister(registerValidator, passwordHasher, userRepo)
 	loginController := controllers.NewLogin(loginValidator, jwt, userRepo)
+	logoutController := controllers.NewLogout(jwt, userRepo)
 
 	app := fiber.New()
 	app.Use(cors.New())
@@ -65,6 +64,7 @@ func main() {
 	app.Get("/register-field-data", registerController.GetRegisterFieldData)
 	app.Post("/register", registerController.Register)
 	app.Post("/login", loginController.Login)
+	app.Post("/logout", logoutController.Logout)
 
 	log.Fatal(app.Listen(":3002"))
 }
