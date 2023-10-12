@@ -49,7 +49,7 @@ func (s *Store) Connect() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	if err = db.AutoMigrate(&entities.User{}); err != nil {
+	if err = db.AutoMigrate(&entities.User{}, &entities.Movie{}, &entities.Interaction{}); err != nil {
 		return nil, err
 	}
 

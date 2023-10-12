@@ -7,10 +7,13 @@ import (
 	"github.com/matt9mg/rawflix-api/cmd"
 	"github.com/matt9mg/rawflix-api/controllers"
 	"github.com/matt9mg/rawflix-api/db"
+	"github.com/matt9mg/rawflix-api/middleware"
 	"github.com/matt9mg/rawflix-api/repositories"
 	"github.com/matt9mg/rawflix-api/services"
+	"github.com/matt9mg/rawflix-api/transformers"
 	"github.com/matt9mg/rawflix-api/validators"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -35,6 +38,8 @@ func main() {
 	}
 
 	userRepo := repositories.NewUser(conn)
+	movieRepo := repositories.NewMovie(conn)
+	interactionRepo := repositories.NewInteraction(conn)
 
 	pwCost, err := strconv.Atoi(os.Getenv("PASSWORD_COST"))
 
@@ -44,8 +49,10 @@ func main() {
 
 	passwordHasher := services.NewPassword(&services.PasswordConfig{Cost: pwCost})
 
+	recombee := services.NewRecoombe(&http.Client{})
+
 	if os.Getenv("CLI") == "true" {
-		cmd.Execute(userRepo, passwordHasher)
+		cmd.Execute(userRepo, passwordHasher, movieRepo, recombee, interactionRepo)
 		os.Exit(0)
 	}
 
@@ -54,17 +61,23 @@ func main() {
 	registerValidator := validators.NewRegister(userRepo)
 	loginValidator := validators.NewLogin(userRepo, passwordHasher)
 
+	movieTransformer := transformers.NewRecommendationMovie()
+
+	jwtMiddleware := middleware.NewJWT(jwt)
+
 	registerController := controllers.NewRegister(registerValidator, passwordHasher, userRepo)
 	loginController := controllers.NewLogin(loginValidator, jwt, userRepo)
 	logoutController := controllers.NewLogout(jwt, userRepo)
+	homeController := controllers.NewHome(recombee, movieRepo, movieTransformer)
 
 	app := fiber.New()
 	app.Use(cors.New())
 
+	app.Get("/home", jwtMiddleware.Validate, homeController.Index)
 	app.Get("/register-field-data", registerController.GetRegisterFieldData)
 	app.Post("/register", registerController.Register)
 	app.Post("/login", loginController.Login)
-	app.Post("/logout", logoutController.Logout)
+	app.Post("/logout", jwtMiddleware.Validate, logoutController.Logout)
 
 	log.Fatal(app.Listen(":3002"))
 }

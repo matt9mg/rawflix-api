@@ -25,10 +25,10 @@ var countries = []string{
 
 const userBatches = 1000
 
-var seedCmd = &cobra.Command{
-	Use:   "seed",
-	Short: "Seeds the database with data",
-	Long:  "Seeds the database with fake data",
+var seedUsersCmd = &cobra.Command{
+	Use:   "seed:users",
+	Short: "Seed users in the database with data",
+	Long:  "Seed users in the database with fake data",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("generating 100 users entries with random data")
 
@@ -64,7 +64,7 @@ var seedCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(seedCmd)
+	rootCmd.AddCommand(seedUsersCmd)
 }
 
 func randomCountry() string {

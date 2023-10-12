@@ -23,13 +23,7 @@ func NewLogout(jwt services.JWTAuthenticator, userRepo repositories.UserReposito
 }
 
 func (l *Logout) Logout(ctx *fiber.Ctx) error {
-	claims, err := l.jwt.Validate(ctx)
-
-	if err != nil {
-		return ctx.JSON("OK")
-	}
-
-	_ = l.userRepo.RemoveTokenFromByUserID(claims.UserID)
+	_ = l.userRepo.RemoveTokenFromByUserID(ctx.Locals("claims").(*services.Claims).UserID)
 
 	return ctx.JSON("OK")
 }

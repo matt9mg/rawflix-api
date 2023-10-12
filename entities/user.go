@@ -41,10 +41,11 @@ var (
 
 type User struct {
 	gorm.Model
-	Username string      `gorm:"unique,notnull"`
-	Password string      `gorm:"notnull"`
-	Country  UserCountry `gorm:"notnull"`
-	Gender   UserGender  `gorm:"notnull"`
-	Recombee bool
-	Token    string
+	Username     string      `gorm:"unique,notnull"`
+	Password     string      `gorm:"notnull"`
+	Country      UserCountry `gorm:"notnull"`
+	Gender       UserGender  `gorm:"notnull"`
+	Recombee     bool
+	Token        string
+	Interactions []*Interaction `gorm:"foreignKey:UserID"`
 }

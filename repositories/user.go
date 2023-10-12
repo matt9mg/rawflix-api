@@ -13,6 +13,9 @@ type UserRepository interface {
 	FindOneByUsername(username string) (*entities.User, error)
 	Save(user *entities.User) error
 	RemoveTokenFromByUserID(userID uint) error
+	FindWhereNotSyncedWithRecombee() ([]*entities.User, error)
+	MarkAsSyncedWithRecombee(user *entities.User) error
+	FindAll() ([]*entities.User, error)
 }
 
 type User struct {
@@ -60,5 +63,25 @@ func (u *User) Save(user *entities.User) error {
 }
 
 func (u *User) RemoveTokenFromByUserID(userID uint) error {
-	return u.db.Debug().Model(&entities.User{}).Where("id = ?", userID).Update("token", nil).Error
+	return u.db.Model(&entities.User{}).Where("id = ?", userID).Update("token", nil).Error
+}
+
+func (u *User) FindWhereNotSyncedWithRecombee() ([]*entities.User, error) {
+	var users []*entities.User
+
+	err := u.db.Model(&entities.User{}).Where("recombee != ?", true).Scan(&users).Error
+
+	return users, err
+}
+
+func (u *User) MarkAsSyncedWithRecombee(user *entities.User) error {
+	return u.db.Model(user).Update("recombee", true).Error
+}
+
+func (u *User) FindAll() ([]*entities.User, error) {
+	var users []*entities.User
+
+	err := u.db.Model(&entities.User{}).Find(&users).Error
+
+	return users, err
 }
