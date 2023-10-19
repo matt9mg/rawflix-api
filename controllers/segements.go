@@ -7,6 +7,7 @@ import (
 	"github.com/matt9mg/rawflix-api/services"
 	"github.com/matt9mg/rawflix-api/transformers"
 	"github.com/matt9mg/rawflix-api/types"
+	"github.com/matt9mg/rawflix-api/utils"
 	"net/http"
 )
 
@@ -29,9 +30,9 @@ func NewSegments(recombee *services.Recoombe, mTransformer transformers.Recommen
 }
 
 func (s *Segments) GetSegmentsForUser(ctx *fiber.Ctx) error {
-	//userID := utils.GetUserIDFromClaimsCtx(ctx)
+	userID := utils.GetUserIDFromClaimsCtx(ctx)
 
-	recommendations, err := s.recombee.Recommendation.RecommendItemSegmentsToUser(103, 5, "home-page-rows")
+	recommendations, err := s.recombee.Recommendation.RecommendItemSegmentsToUser(userID, 5, "home-page-rows")
 
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -41,7 +42,7 @@ func (s *Segments) GetSegmentsForUser(ctx *fiber.Ctx) error {
 	var collection []*types.MovieCollection
 
 	for _, recommendation := range recommendations.Recommendations {
-		r, _ := s.recombee.Recommendation.ReccommendItemsToUserWithFilter(103, 4, "home-page-rows", recommendation.ID)
+		r, _ := s.recombee.Recommendation.ReccommendItemsToUserWithFilter(userID, 4, "home-page-rows", recommendation.ID)
 
 		ids, err := r.GetIDS()
 
@@ -50,7 +51,7 @@ func (s *Segments) GetSegmentsForUser(ctx *fiber.Ctx) error {
 			return ctx.JSON(err)
 		}
 
-		movies, err := s.mRepo.GetByRecommendation(ids, 103, entities.InteractionTypeBookmark)
+		movies, err := s.mRepo.GetByRecommendation(ids, userID, entities.InteractionTypeBookmark)
 
 		if err != nil {
 			ctx.SendStatus(http.StatusBadRequest)
