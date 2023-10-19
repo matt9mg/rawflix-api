@@ -66,6 +66,16 @@ var seedInteractionCmd = &cobra.Command{
 		var interactions []*entities.Interaction
 
 		for k, user := range users {
+			if user.ID != 105 {
+				continue
+			}
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			interactions = append(interactions, buildInteractions(thrillerMovies, user)...)
+			continue
 			if k < 20 {
 				interactions = append(interactions, buildInteractions(comedyMovies, user)...)
 				continue
@@ -116,6 +126,7 @@ func buildInteractions(movies []*entities.Movie, user *entities.User) []*entitie
 		interactions = append(interactions, &entities.Interaction{
 			UserID:  user.ID,
 			MovieID: movie.ID,
+			Type:    entities.InteractionTypeDetailView,
 		})
 	}
 

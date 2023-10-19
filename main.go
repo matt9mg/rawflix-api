@@ -60,24 +60,36 @@ func main() {
 
 	registerValidator := validators.NewRegister(userRepo)
 	loginValidator := validators.NewLogin(userRepo, passwordHasher)
+	interactionValidator := validators.NewInteraction(movieRepo)
 
 	movieTransformer := transformers.NewRecommendationMovie()
+	interactionTransformer := transformers.NewInteraction()
 
 	jwtMiddleware := middleware.NewJWT(jwt)
 
 	registerController := controllers.NewRegister(registerValidator, passwordHasher, userRepo)
 	loginController := controllers.NewLogin(loginValidator, jwt, userRepo)
 	logoutController := controllers.NewLogout(jwt, userRepo)
-	homeController := controllers.NewHome(recombee, movieRepo, movieTransformer)
+	userItemsController := controllers.NewUserItems(recombee, movieRepo, movieTransformer)
+	favouriteController := controllers.NewBookmark(interactionRepo, interactionValidator, interactionTransformer, recombee)
+	viewedController := controllers.NewViewed(interactionRepo, interactionValidator, interactionTransformer, recombee)
+	movieController := controllers.NewMovie(movieRepo, movieTransformer)
+	itemsToItemController := controllers.NewItemItems(recombee, movieRepo, movieTransformer)
+	segmentsController := controllers.NewSegments(recombee)
 
 	app := fiber.New()
 	app.Use(cors.New())
 
-	app.Get("/home", jwtMiddleware.Validate, homeController.Index)
+	app.Get("/recommend-for-scenario", jwtMiddleware.Validate, userItemsController.RecommendForScenario)
 	app.Get("/register-field-data", registerController.GetRegisterFieldData)
 	app.Post("/register", registerController.Register)
 	app.Post("/login", loginController.Login)
 	app.Post("/logout", jwtMiddleware.Validate, logoutController.Logout)
+	app.Post("/bookmark", jwtMiddleware.Validate, favouriteController.Bookmark)
+	app.Post("/viewed", jwtMiddleware.Validate, viewedController.Viewed)
+	app.Get("/movie/:id<int>", jwtMiddleware.Validate, movieController.Get)
+	app.Get("/recommend-like/:id<int>", jwtMiddleware.Validate, itemsToItemController.Like)
+	app.Get("/segments", segmentsController.GetSegmentsForUser)
 
 	log.Fatal(app.Listen(":3002"))
 }

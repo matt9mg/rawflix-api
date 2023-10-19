@@ -14,7 +14,8 @@ type MovieRepository interface {
 	FindWhereNotSyncedWithRecombee() ([]*entities.Movie, error)
 	MarkAsSyncedWithRecombee(movie *entities.Movie) error
 	FindMoviesWithGenre(genre string) ([]*entities.Movie, error)
-	GetByRecommendation(ids []uint) ([]*entities.Movie, error)
+	GetByRecommendation(ids []uint, userID uint, interactionType entities.InteractionType) ([]map[string]interface{}, error)
+	FindByID(id uint) (*entities.Movie, error)
 }
 
 type Movie struct {
@@ -67,10 +68,20 @@ func (u *Movie) FindMoviesWithGenre(genre string) ([]*entities.Movie, error) {
 	return movies, err
 }
 
-func (u *Movie) GetByRecommendation(ids []uint) ([]*entities.Movie, error) {
-	var movies []*entities.Movie
+func (u *Movie) GetByRecommendation(ids []uint, userID uint, interactionType entities.InteractionType) ([]map[string]interface{}, error) {
+	var movies []map[string]interface{}
 
-	err := u.db.Model(&entities.Movie{}).Find(&movies, ids).Error
+	err := u.db.Raw("select movies.poster, movies.title, movies.id, movies.genre, movies.runtime, movies.plot, interactions.id as interaction_id "+
+		"FROM movies left join interactions on movies.id = interactions.movie_id AND interactions.type = ? and interactions.user_id = ? "+
+		"WHERE movies.id IN (?)", interactionType, userID, ids).Scan(&movies).Error
 
 	return movies, err
+}
+
+func (u *Movie) FindByID(id uint) (*entities.Movie, error) {
+	var movie *entities.Movie
+
+	err := u.db.Model(&entities.Movie{}).Find(&movie, id).Error
+
+	return movie, err
 }

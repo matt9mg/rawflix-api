@@ -2,6 +2,8 @@ package utils
 
 import (
 	"encoding/json"
+	"github.com/gofiber/fiber/v2"
+	"github.com/matt9mg/rawflix-api/services"
 	"gorm.io/datatypes"
 	"strconv"
 	"strings"
@@ -51,4 +53,8 @@ func StringToUint(data string) (uint, error) {
 	}
 
 	return uint(datum), nil
+}
+
+func GetUserIDFromClaimsCtx(ctx *fiber.Ctx) uint {
+	return ctx.Locals("claims").(*services.Claims).UserID
 }

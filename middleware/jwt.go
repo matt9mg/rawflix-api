@@ -30,5 +30,5 @@ func (j *JWT) Validate(ctx *fiber.Ctx) error {
 
 	ctx.Locals("claims", claims)
 
-	return nil
+	return ctx.Next()
 }

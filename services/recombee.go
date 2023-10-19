@@ -81,6 +81,46 @@ func NewRecoombe(client *http.Client) *Recoombe {
 	}
 }
 
+func (r *Recommendation) ReccommendItemsToItem(itemId uint, userId uint, totalRecords int, scenario string) (*types.RecombeeRecommendations, error) {
+	path := buildPath(fmt.Sprintf("/recomms/items/%d/items/?targetUserId=%d&count=%d&scenario=%s&cascadeCreate=true", itemId, userId, totalRecords, scenario))
+
+	resp, err := doRequest("GET", path, r.client, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	var recommendation *types.RecombeeRecommendations
+
+	if err = json.NewDecoder(resp.Body).Decode(&recommendation); err != nil {
+		return nil, buildErrorString(resp)
+	}
+
+	return recommendation, nil
+}
+
+func (r *Recommendation) ReccommendItemsToUserWithFilter(userId uint, totalRecords int, scenario string, filter string) (*types.RecombeeRecommendations, error) {
+	path := buildPath(fmt.Sprintf("/recomms/users/%d/items/?count=%d&scenario=%s&cascadeCreate=true?filter=\"%s\" in 'genres'", userId, totalRecords, scenario, filter))
+
+	resp, err := doRequest("GET", path, r.client, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	var recommendation *types.RecombeeRecommendations
+
+	if err = json.NewDecoder(resp.Body).Decode(&recommendation); err != nil {
+		return nil, buildErrorString(resp)
+	}
+
+	return recommendation, nil
+}
+
 func (r *Recommendation) ReccommendItemsToUser(userId uint, totalRecords int, scenario string) (*types.RecombeeRecommendations, error) {
 	path := buildPath(fmt.Sprintf("/recomms/users/%d/items/?count=%d&scenario=%s&cascadeCreate=true", userId, totalRecords, scenario))
 
@@ -101,8 +141,8 @@ func (r *Recommendation) ReccommendItemsToUser(userId uint, totalRecords int, sc
 	return recommendation, nil
 }
 
-func (r *Recommendation) RecommendItemSegmentsToUser(userId string, totalRecords int, scenario string) (*types.RecombeeRecommendations, error) {
-	path := buildPath(fmt.Sprintf("/recomms/users/%s/item-segments/?count=%d&scenario=%s&cascadeCreate=true", userId, totalRecords, scenario))
+func (r *Recommendation) RecommendItemSegmentsToUser(userId uint, totalRecords int, scenario string) (*types.RecombeeRecommendations, error) {
+	path := buildPath(fmt.Sprintf("/recomms/users/%d/item-segments/?count=%d&scenario=%s&cascadeCreate=true&returnProperties=true", userId, totalRecords, scenario))
 
 	resp, err := doRequest("GET", path, r.client, nil)
 
@@ -233,6 +273,24 @@ func (uii *UserItemInteraction) AddDetailView(view *types.RecombeeUserItemIntera
 	path := buildPath("/detailviews/")
 
 	resp, err := doRequest("POST", path, uii.client, view)
+
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return buildErrorString(resp)
+	}
+
+	return nil
+}
+
+func (uii *UserItemInteraction) AddBookmark(bookmark *types.RecombeeUserItemInteraction) error {
+	path := buildPath("/bookmarks/")
+
+	resp, err := doRequest("POST", path, uii.client, bookmark)
 
 	if err != nil {
 		return err
