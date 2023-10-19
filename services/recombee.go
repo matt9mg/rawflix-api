@@ -102,9 +102,19 @@ func (r *Recommendation) ReccommendItemsToItem(itemId uint, userId uint, totalRe
 }
 
 func (r *Recommendation) ReccommendItemsToUserWithFilter(userId uint, totalRecords int, scenario string, filter string) (*types.RecombeeRecommendations, error) {
-	path := buildPath(fmt.Sprintf("/recomms/users/%d/items/?count=%d&scenario=%s&cascadeCreate=true?filter=\"%s\" in 'genres'", userId, totalRecords, scenario, filter))
+	params := struct {
+		Scenario string `json:"scenario"`
+		Cascade  bool   `json:"cascade"`
+		Filter   string
+	}{
+		Scenario: scenario,
+		Cascade:  true,
+		Filter:   fmt.Sprintf("\"%s\" in 'genres'", filter),
+	}
 
-	resp, err := doRequest("GET", path, r.client, nil)
+	path := buildPath(fmt.Sprintf("/recomms/users/%d/items/?count=%d", userId, totalRecords))
+
+	resp, err := doRequest("GET", path, r.client, params)
 
 	if err != nil {
 		return nil, err
@@ -142,7 +152,7 @@ func (r *Recommendation) ReccommendItemsToUser(userId uint, totalRecords int, sc
 }
 
 func (r *Recommendation) RecommendItemSegmentsToUser(userId uint, totalRecords int, scenario string) (*types.RecombeeRecommendations, error) {
-	path := buildPath(fmt.Sprintf("/recomms/users/%d/item-segments/?count=%d&scenario=%s&cascadeCreate=true&returnProperties=true", userId, totalRecords, scenario))
+	path := buildPath(fmt.Sprintf("/recomms/users/%d/item-segments/?count=%d&scenario=%s&cascadeCreate=true", userId, totalRecords, scenario))
 
 	resp, err := doRequest("GET", path, r.client, nil)
 

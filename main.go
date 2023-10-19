@@ -75,7 +75,7 @@ func main() {
 	viewedController := controllers.NewViewed(interactionRepo, interactionValidator, interactionTransformer, recombee)
 	movieController := controllers.NewMovie(movieRepo, movieTransformer)
 	itemsToItemController := controllers.NewItemItems(recombee, movieRepo, movieTransformer)
-	segmentsController := controllers.NewSegments(recombee)
+	segmentsController := controllers.NewSegments(recombee, movieTransformer, movieRepo)
 
 	app := fiber.New()
 	app.Use(cors.New())

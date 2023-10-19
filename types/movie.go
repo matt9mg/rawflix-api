@@ -10,3 +10,8 @@ type Movie struct {
 	Genres           []string `json:"genres"`
 	Bookmarked       bool     `json:"bookmarked"`
 }
+
+type MovieCollection struct {
+	Title  string   `json:"title"`
+	Movies []*Movie `json:"movies"`
+}
